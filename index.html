@@ -5,7 +5,13 @@
     <title>Salah Times & Qiblah Direction</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: Arial, sans-serif; background: #f6fff6; color: #173a21; margin: 0; padding: 0;}
+        body {
+            font-family: Arial, sans-serif;
+            background: #f6fff6;
+            color: #173a21;
+            margin: 0;
+            padding: 0;
+        }
         .company-header {
             background: #258d63;
             color: #fff;
@@ -25,205 +31,10 @@
             color: #aef1c8;
         }
         .container {
-            max-width: 900px; margin: 40px auto; background: #fff;
-            border-radius: 16px; box-shadow: 0 2px 10px #0002;
-            display: flex; flex-wrap: wrap; min-height: 350px; 
-        }
-        .main-content {
-            flex: 2 1 350px; padding: 24px;
-        }
-        .side-image {
-            flex: 1 1 200px; background: #eef5eb; display: flex; align-items: center; justify-content: center; 
-            border-radius: 0 16px 16px 0; min-width: 220px; min-height: 220px;
-        }
-        .side-image img {
-            width: 90%; max-width: 230px; border-radius: 15px;
-            box-shadow: 0 2px 10px #0001;
-        }
-        h2 { color: #33bb70; }
-        #location, #qiblah, #salah-times { margin: 18px 0; }
-        .times-list { list-style: none; padding: 0; }
-        .times-list li { margin: 8px 0; }
-        .qiblah-degree { font-size: 2rem; color: #258d63;}
-        .footer { margin-top: 30px; color: #888; font-size: .96rem;}
-        .search-section { background: #f5fdfa; padding: 15px 15px 8px 15px; border-radius: 12px; margin-bottom: 15px; }
-        .search-section input, .search-section button {
-            font-size: 1rem; padding: 6px 12px; margin-right: 6px; border-radius: 7px; border: 1px solid #aadbb2;
-        }
-        .search-section button {
-            background: #36c375; color: white; border: none; cursor: pointer;
-        }
-        .search-section button:hover { background: #229c5c;}
-        @media (max-width: 700px) {
-            .container { flex-direction: column;}
-            .side-image { border-radius: 0 0 16px 16px; min-height: 120px;}
-        }
-    </style>
-</head>
-<body>
-    <div class="company-header">
-        <h1>Gobaz IT Consultant</h1>
-        <div class="hook">Unlock the future of your business with smart AI solutions—partner with Gobaz IT Consultant today!</div>
-    </div>
-    <div class="container">
-        <div class="main-content">
-            <h2>🕌 Salah Times & Qiblah Finder</h2>
-            <div class="search-section">
-                <form id="locationForm" autocomplete="off">
-                    <input type="text" id="cityInput" placeholder="Enter City" required>
-                    <input type="text" id="countryInput" placeholder="Enter Country" required>
-                    <button type="submit">Search</button>
-                    <button type="button" id="myLocationBtn" title="Use my current location">📍</button>
-                </form>
-            </div>
-            <div id="location">Detecting your location...</div>
-            <div id="salah-times"></div>
-            <div id="qiblah"></div>
-            <div class="footer">Made with ❤️ for the Ummah.</div>
-        </div>
-        <div class="side-image">
-            <img src="images/madinah.jpeg" alt="Madinah" onerror="this.style.display='none';">
-        </div>
-    </div>
-    <script>
-        // Helper: Show error
-        function showError(msg) {
-            document.getElementById('location').innerHTML = '<span style="color:red;">' + msg + '</span>';
-            document.getElementById('salah-times').innerHTML = '';
-            document.getElementById('qiblah').innerHTML = '';
-        }
-
-        // Helper: 24hr to 12hr AM/PM
-        function to12hr(timeStr) {
-            if (!timeStr) return "";
-            let [hour, min] = timeStr.split(':').map(Number);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            hour = hour % 12;
-            if (hour === 0) hour = 12;
-            return `${hour}:${min.toString().padStart(2, '0')} ${ampm}`;
-        }
-
-        // Helper: coords to City, Country
-        function reverseGeocode(lat, lon, callback) {
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`)
-            .then(r => r.json())
-            .then(d => {
-                let city = d.address.city || d.address.town || d.address.village || d.address.hamlet || "";
-                let country = d.address.country || "";
-                callback(city, country);
-            }).catch(_=>{
-                callback("", "");
-            });
-        }
-
-        // Helper: Search geocoding, returns lat, lon
-        function geocodeCityCountry(city, country, callback) {
-            // Use Nominatim for free search
-            fetch(`https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&format=json&limit=1`)
-            .then(r=>r.json())
-            .then(arr=>{
-                if(arr && arr.length) {
-                    let place = arr[0];
-                    callback(Number(place.lat), Number(place.lon));
-                } else {
-                    callback(null, null);
-                }
-            }).catch(_=>{
-                callback(null, null);
-            });
-        }
-
-        // Salah times
-        function fetchSalahTimes(lat, lon) {
-            const today = new Date();
-            const dateStr = today.getDate() + '-' + (today.getMonth()+1) + '-' + today.getFullYear();
-            fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=2`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.code === 200) {
-                    const timings = data.data.timings;
-                    let html = "<h3>Today's Salah Times</h3><ul class='times-list'>";
-                    for (let key of ['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha']) {
-                        html += `<li><b>${key}:</b> ${to12hr(timings[key])}</li>`;
-                    }
-                    html += "</ul>";
-                    document.getElementById('salah-times').innerHTML = html;
-                } else {
-                    showError('Unable to fetch prayer times.');
-                }
-            });
-        }
-
-        // Qiblah direction
-        function fetchQiblah(lat, lon) {
-            fetch(`https://api.aladhan.com/v1/qibla/${lat}/${lon}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.code === 200) {
-                    const degree = data.data.direction.toFixed(2);
-                    document.getElementById('qiblah').innerHTML = 
-                        `<h3>Qiblah Direction</h3>
-                        <div class="qiblah-degree">${degree}° from North</div>
-                        <small>Face this direction for Salah.</small>`;
-                } else {
-                    document.getElementById('qiblah').innerHTML = 
-                        '<span style="color:red;">Unable to fetch Qiblah direction.</span>';
-                }
-            });
-        }
-
-        // Update all: Salah/Qiblah/location
-        function updateAll(lat, lon, city, country) {
-            let locString = "<b>Your Location:</b><br>";
-            if (city || country) locString += `${city ? city + ', ' : ''}${country}`;
-            else locString += "Location found";
-            document.getElementById('location').innerHTML = locString;
-            fetchSalahTimes(lat, lon);
-            fetchQiblah(lat, lon);
-        }
-
-        // Initial: Use browser geolocation
-        function useMyLocation() {
-            document.getElementById('location').innerHTML = "Detecting your location...";
-            if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    pos => {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
-                        reverseGeocode(lat, lon, function(city, country) {
-                            updateAll(lat, lon, city, country);
-                        });
-                    },
-                    err => {
-                        showError("Couldn't get your location. Please allow location access.");
-                    }
-                );
-            } else {
-                showError('Geolocation is not supported in your browser.');
-            }
-        }
-
-        // Search box event
-        document.getElementById('locationForm').onsubmit = function(e) {
-            e.preventDefault();
-            const city = document.getElementById('cityInput').value.trim();
-            const country = document.getElementById('countryInput').value.trim();
-            if (!city || !country) return;
-            document.getElementById('location').innerHTML = "Looking up location...";
-            geocodeCityCountry(city, country, function(lat, lon) {
-                if (lat && lon) {
-                    updateAll(lat, lon, city, country);
-                } else {
-                    showError("Sorry, couldn't find that location.");
-                }
-            });
-        };
-
-        // "My location" button
-        document.getElementById('myLocationBtn').onclick = useMyLocation;
-
-        // On page load: use current location
-        useMyLocation();
-    </script>
-</body>
-</html>
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 10px #0002;
+            display: flex;
+            flex-wr
