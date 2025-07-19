@@ -1,0 +1,22 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Masjid base (rectangle) -->
+  <rect x="12" y="32" width="40" height="20" rx="3" fill="#3498db"></rect>
+  
+  <!-- Door -->
+  <rect x="28" y="44" width="8" height="8" rx="2" fill="#fff"></rect>
+  
+  <!-- Dome (centered, green) -->
+  <ellipse cx="32" cy="32" rx="12" ry="8" fill="#33bb70"></ellipse>
+  <!-- Dome crescent (optional, yellow) -->
+  <path d="M32 22a2.5 2.5 0 0 1 0 5 2 2 0 1 0 0-5z" fill="#f7dc6f"></path>
+  
+  <!-- Left minaret (yellow) -->
+  <rect x="8" y="18" width="5" height="34" rx="2.2" fill="#f7dc6f"></rect>
+  <rect x="7.5" y="14" width="6" height="7" rx="2.5" fill="#f7dc6f"></rect>
+  <circle cx="11" cy="13" r="3" fill="#f7dc6f"></circle>
+  
+  <!-- Right minaret (yellow) -->
+  <rect x="51" y="18" width="5" height="34" rx="2.2" fill="#f7dc6f"></rect>
+  <rect x="50.5" y="14" width="6" height="7" rx="2.5" fill="#f7dc6f"></rect>
+  <circle cx="54" cy="13" r="3" fill="#f7dc6f"></circle>
+</svg>
